@@ -1,0 +1,44 @@
+.transportecaba {
+  border-collapse: collapse!important;
+}
+
+.transportecaba .small {
+  font-size: 14px;
+}
+
+.transportecaba .medium {
+  font-size: 20px;
+}
+
+.transportecaba tr.last {
+  border-bottom: 1px solid gray;
+}
+
+.transportecaba td.bus-line {
+  color: white;
+  padding-right: 1em;
+  text-align: left;
+}
+.transportecaba td.bus-symbol {
+  padding-right: 0.2em;
+}
+
+.transportecaba td.bus-distance {
+  padding-right: 0.5em;
+}
+
+.transportecaba td.arriving {
+  color: red;
+}
+
+.transportecaba td.close {
+  color: yellow;
+}
+
+.transportecaba td.faraway {
+  color: green;
+}
+
+.transportecaba td.number {
+  text-align: right;
+}
