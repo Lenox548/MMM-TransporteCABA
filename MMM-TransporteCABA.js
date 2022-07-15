@@ -9,12 +9,14 @@
 
 Module.register("MMM-TransporteCABA", {
   busesInfo: [],
+  arrBuses: [],
   defaults: {
     header: 'Transporte CABA',
+    apiKeys: [{client_id: '', client_secret: ''}],
+    useBuses: false,
     buses: [
       {
-        line: '120',
-        stop: 8317
+        line: ''
       }
     ],
     mmLocation: [ -34.6, -58.433333 ], // [ latitude, longitude ]
@@ -37,10 +39,8 @@ Module.register("MMM-TransporteCABA", {
     const nextLoad = (typeof delay !== "undefined" && delay >= 0) ? delay : this.config.updateInterval;
     setTimeout(() => {
       this.busesInfo = []; // prevent redrawing twice the same info
-      this.config.buses.forEach(info => {
-        this.sendSocketNotification('GET_INFO', info);
-      });
-
+      this.arrBuses = []; // prevent redrawing twice the same info
+      this.sendSocketNotification('GET_INFO', this.config.apiKeys);
 			this.scheduleUpdate();
 	 	}, nextLoad);
 
@@ -71,20 +71,30 @@ Module.register("MMM-TransporteCABA", {
     var wrapper = document.createElement("table")
     if (Object.entries(this.busesInfo).length === 0) return wrapper
 
-    var busList = this.config.buses
-    var busesInformation = this.busesInfo
-
-    wrapper.className = 'cuandollega ' + this.config.infoClass
-    let arrBuses = [];
-    ///*
+    wrapper.className = 'transportecaba ' + this.config.infoClass
     this.busesInfo.forEach(bus => {
       var route_short_name = bus.route_short_name;
       var trip_headsign = bus.trip_headsign;
       var nameToUse = "arr"+route_short_name+trip_headsign;
-      if(arrBuses.includes(2)){
-
+      if(!this.arrBuses.some(e => e.variableName == nameToUse))
+      this.arrBuses.push({variableName: nameToUse, variableValue:[bus]});
+      else{
+        index = this.arrBuses.findIndex(e => e.variableName == nameToUse);
+        this.arrBuses[index].variableValue.push(bus);
       }
-      let nearBuses = (typeof nameToUse !== 'undefined' && nameToUse.length > 0) ? delay : this.config.updateInterval;
+      if(this.config.useBuses === true){
+        arrTemp = [];
+        this.config.buses.forEach(busName => {
+          if(this.arrBuses.some(e => e.variableName.includes(busName.line))){
+            index = this.arrBuses.findIndex(e => e.variableName.includes(busName.line));
+            arrTemp.push(this.arrBuses[index]);
+          }
+        })
+        this.arrBuses = arrTemp;
+      }
+    })
+    this.arrBuses.forEach(bus => {
+      let nearBuses = bus.variableValue;
       let first = true
       for (let key in nearBuses) {
         let value = nearBuses[key]
@@ -94,19 +104,19 @@ Module.register("MMM-TransporteCABA", {
           busDistanceCell = document.createElement("td"),
           busMinutesCell = document.createElement("td");
         
-        if (nearBuses.length == 1) busRow.className = 'last' // some lines could have only 1 arrival time
+        if (value.length == 1) busRow.className = 'last' // some lines could have only 1 arrival time
         else busRow.className = first ? '' : 'last'
         busSymbolCell.innerHTML = first ? '<i class="fas fa-bus"></i>' : ''
         busSymbolCell.className = 'bus-symbol'
-        busLineCell.innerHTML = first ? nearBuses['route_short_name'] : ''
+        busLineCell.innerHTML = first ? value['route_short_name'] : ''
         busLineCell.className = 'bus-line'
-        busDistanceCell.innerHTML = this.distanceToMM(nearBuses['latitude'], nearBuses['longitude'])
+        busDistanceCell.innerHTML = this.distanceToMM(value['latitude'], value['longitude'])
         busDistanceCell.className = 'bus-distance number'
-        busMinutesCell.innerHTML = nearBuses['speed'] + ' min'
+        busMinutesCell.innerHTML = value['speed'] + ' min'
         let proximityClass = ''
-        if (nearBuses['speed'] <= 3 ) {
+        if (value['speed'] <= 3 ) {
           proximityClass = 'arriving'
-        } else if(nearBuses['speed'] > 3 && nearBuses['speed'] <= 5) {
+        } else if(value['speed'] > 3 && value['speed'] <= 5) {
           proximityClass = 'close'
         } else proximityClass = 'faraway'
        
@@ -122,7 +132,6 @@ Module.register("MMM-TransporteCABA", {
         first = false
       }
     })
-    //*/
 		return wrapper
   },
   // distance from the upcoming bus to where my MagicMirror is located

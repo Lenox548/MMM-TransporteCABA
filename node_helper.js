@@ -23,9 +23,9 @@ module.exports = NodeHelper.create({
         params: {
           //linea: info.line,
           //parada: info.stop,
-          //route_id: 1577,
-          client_id: '4d676f56a6134ce08624b046a6543a44',
-          client_secret: '0662B467417941c4a40F5f6855f4AfA5'
+          //route_id: 1749,
+          client_id: info[0].client_id,
+          client_secret: info[0].client_secret
         } 
       })
       .then(function (response, error) {
